@@ -1,0 +1,28 @@
+[gd_scene load_steps=3 format=3 uid="uid://cgrr2rg42dji2"]
+
+[ext_resource type="Script" path="res://example.gd" id="1_73cfq"]
+[ext_resource type="Script" path="res://DictProperty.gd" id="2_m6gcw"]
+
+[node name="example" type="Node2D"]
+script = ExtResource("1_73cfq")
+
+[node name="DebugTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
+[node name="ExecuteTimer" type="Timer" parent="."]
+
+[node name="HBox" type="HBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DictProperty" type="GridContainer" parent="HBox"]
+layout_mode = 2
+script = ExtResource("2_m6gcw")
+
+[node name="Panel" type="Panel" parent="HBox"]
+layout_mode = 2
+
+[connection signal="timeout" from="DebugTimer" to="." method="_on_debug_timer_timeout"]
+[connection signal="timeout" from="ExecuteTimer" to="." method="_on_execute_timer_timeout"]
+[connection signal="property_changed" from="HBox/DictProperty" to="." method="_on_dict_property_property_changed"]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b87gc6bur5823"]
+
+[ext_resource type="Script" path="res://utils/DelaunayAzgaar.gd" id="1_vm4ef"]
+
+[node name="DelaunayAzgaar" type="Node"]
+script = ExtResource("1_vm4ef")
