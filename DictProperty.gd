@@ -23,7 +23,7 @@ func update_dict(property_dict = {}):
         add_child(label)
         match property_dict[key]["type"]:
             "Button":
-                print ("Button")
+                #print ("Button")
                 label.text = ""
                 var prop = Button.new()
                 prop.text = property_dict[key]["name"]
@@ -31,14 +31,14 @@ func update_dict(property_dict = {}):
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
                 prop.connect("pressed", func() : _property_update(key, true))
             "CheckBox":
-                print ("BOOL")
+                #print ("BOOL")
                 var prop = CheckBox.new()
                 prop.button_pressed = property_dict[key]["value"]
                 add_child(prop)
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
                 prop.connect("pressed", func() : _property_update(key, prop.button_pressed))
             "SpinBox":
-                print("FLOAT")
+                #print("FLOAT")
                 var prop = SpinBox.new()
                 prop.min_value = property_dict[key]["min"]
                 prop.max_value = property_dict[key]["max"]
@@ -53,7 +53,7 @@ func update_dict(property_dict = {}):
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
                 prop.connect("value_changed", func(_val) : _property_update(key, _val))
             "HSlider":
-                print("FLOAT")
+                #print("FLOAT")
                 var prop = HSlider.new()
                 prop.min_value = property_dict[key]["min"]
                 prop.max_value = property_dict[key]["max"]
@@ -66,7 +66,7 @@ func update_dict(property_dict = {}):
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
                 prop.connect("value_changed", func(_val) : _property_update(key, _val))
             "LineEdit":
-                print("STRING")
+                #print("STRING")
                 var prop = LineEdit.new()
                 prop.text = property_dict[key]["value"]
                 if "readonly" in property_dict[key]:
@@ -93,6 +93,8 @@ func set_value(n, value):
             m_widget_dict[n]["widget"].text = value
         "HSlider":
             m_widget_dict[n]["widget"].value = value
+        "Button":
+            m_widget_dict[n]["widget"].text = value
 
 func _property_update(property_name, property_value):
     property_changed.emit(property_name, property_value)

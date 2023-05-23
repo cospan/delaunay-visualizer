@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://cgrr2rg42dji2"]
+[gd_scene load_steps=4 format=3 uid="uid://cgrr2rg42dji2"]
 
 [ext_resource type="Script" path="res://example.gd" id="1_73cfq"]
 [ext_resource type="Script" path="res://DictProperty.gd" id="2_m6gcw"]
+[ext_resource type="Script" path="res://delaunay_texture_map.gd" id="3_shmbq"]
 
 [node name="example" type="Node2D"]
 script = ExtResource("1_73cfq")
@@ -12,17 +13,27 @@ one_shot = true
 
 [node name="ExecuteTimer" type="Timer" parent="."]
 
-[node name="HBox" type="HBoxContainer" parent="."]
+[node name="TabContainer" type="TabContainer" parent="."]
 offset_right = 40.0
 offset_bottom = 40.0
+clip_tabs = false
 
-[node name="DictProperty" type="GridContainer" parent="HBox"]
+[node name="Main" type="HBoxContainer" parent="TabContainer"]
+layout_mode = 2
+
+[node name="DictProperty" type="GridContainer" parent="TabContainer/Main"]
 layout_mode = 2
 script = ExtResource("2_m6gcw")
 
-[node name="Panel" type="Panel" parent="HBox"]
+[node name="Panel" type="Panel" parent="TabContainer/Main"]
 layout_mode = 2
+
+[node name="TexureMap" type="TextureRect" parent="TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_shmbq")
 
 [connection signal="timeout" from="DebugTimer" to="." method="_on_debug_timer_timeout"]
 [connection signal="timeout" from="ExecuteTimer" to="." method="_on_execute_timer_timeout"]
-[connection signal="property_changed" from="HBox/DictProperty" to="." method="_on_dict_property_property_changed"]
+[connection signal="property_changed" from="TabContainer/Main/DictProperty" to="." method="_on_dict_property_property_changed"]

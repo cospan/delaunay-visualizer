@@ -5,6 +5,7 @@ enum STATE {RESET, INIT, ADD_POINT, MAKE_OUTER_POLYGON, FINALIZE_TRIANGLE, DONE,
 @export var WAIT_TIME = 0.2
 @onready var debug_timer = $DebugTimer
 @onready var execute_timer = $ExecuteTimer
+@onready var delaunay_texture_map = $TabContainer/TexureMap
 
 var panel
 var m_dict_property
@@ -44,9 +45,10 @@ func _ready():
     d["execution_time"] = {"type": "SpinBox", "min": 0.0, "max": 100000.0, "value": 0.0, "name": "Execution Time", "readonly": true} # execution time
     d["step_button"] = {"type": "Button", "name": "Step"} # step
     d["start_stop_button"] = {"type": "Button", "name": "Start"} # start triangulation
+    d["save_image"] = {"type": "Button", "name": "Save Image"} # save image
 
-    panel = $HBox/Panel
-    m_dict_property = $HBox/DictProperty
+    panel = $TabContainer/Main/Panel
+    m_dict_property = $TabContainer/Main/DictProperty
     m_dict_property.update_dict(d)
     initialize()
     m_state = STATE.RESET
@@ -63,6 +65,7 @@ func initialize():
     execute_timer.start(1.0)
 
     delaunay = AzgaarDelaunay.Delaunay.new(get_viewport_rect())
+    delaunay_texture_map.initialize(delaunay, Vector2i(get_viewport_rect().size))
     m_points.clear()
     var width = (get_viewport_rect().size.x * 0.8)
     var height = (get_viewport_rect().size.y * 0.8)
@@ -103,6 +106,7 @@ func _process(_delta):
                 debug_timer.start(WAIT_TIME)
         STATE.FINALIZE_TRIANGLE:
             m_curr_triangles = delaunay.triangulate_debug_3_finalize_triangle(m_points[m_point_index])
+            delaunay_texture_map.triangles_updated()
             m_point_index += 1
             for triangle in m_prev_triangles:
                 triangle.queue_free()
@@ -115,7 +119,7 @@ func _process(_delta):
             else:
                 m_next_state = STATE.DONE
             m_dict_property.set_value("num_points", len(delaunay.m_points))
-            m_dict_property.set_value("num_triangle_search", len(delaunay.debug_triangulation))
+            m_dict_property.set_value("num_triangle_search", len(delaunay.m_triangles))
             if !m_enable_step:
                 debug_timer.start(WAIT_TIME)
 
@@ -219,20 +223,22 @@ func _on_dict_property_property_changed(property_name, property_value):
             m_shuffle_flag = property_value
         "start_stop_button":
             if m_state == STATE.RESET:
-                m_dict_property.set_label("start_stop_button", "Stop")
                 initialize()
+                m_dict_property.set_value("start_stop_button", "Stop")
                 m_dict_property.set_value("num_triangle_search", 0)
                 m_dict_property.set_value("num_points", 0)
                 m_state = STATE.INIT
                 m_next_state = STATE.INIT
             else:
-                m_dict_property.set_label("start_stop_button", "Start")
+                m_dict_property.set_value("start_stop_button", "Start")
                 execute_timer.stop()
                 m_state = STATE.RESET
                 m_next_state = STATE.RESET
         "wait_time":
             WAIT_TIME = property_value
             m_dict_property.set_value("wait_time_read_only", property_value)
+        "save_image":
+            delaunay_texture_map.save_image("test.png")
         _:
             pass
 

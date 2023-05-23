@@ -120,11 +120,9 @@ class Delaunay:
     var m_bad_triangles: Array  = []
     var m_polygon: Array  = []
 
-
     func _init(rect: Rect2 = Rect2()):
         m_points = []
         set_rect(rect)
-
 
     func add_point(coor: Vector2, data) -> void:
         m_points.append(Point2.new(coor, data))
@@ -180,26 +178,26 @@ class Delaunay:
 
         return triangulation
 
-    var debug_triangulation: Array = []
+    var m_triangles: Array = []
     func triangulate_debug_init():
-        debug_triangulation.clear()
+        m_triangles.clear()
         m_points.clear()
         if !(m_rect.has_area()):
             set_rect(calc_rect(m_points))
 
-        debug_triangulation.append(m_rect_super_triangle1)
-        debug_triangulation.append(m_rect_super_triangle2)
+        m_triangles.append(m_rect_super_triangle1)
+        m_triangles.append(m_rect_super_triangle2)
 
     func triangulate_debug_1_find_bad_triangles_from_point(point:Point2) -> Array:
         m_bad_triangles.clear()
         m_polygon.clear()
         m_points.append(point)
-        _find_bad_triangles(point, debug_triangulation, m_bad_triangles)
+        _find_bad_triangles(point, m_triangles, m_bad_triangles)
         return m_bad_triangles
 
     func triangulate_debug_2_make_outer_polygon() -> Array:
         for bad_tirangle in m_bad_triangles:
-            debug_triangulation.erase(bad_tirangle)
+            m_triangles.erase(bad_tirangle)
 
         _make_outer_polygon(m_bad_triangles, m_polygon)
         return m_polygon
@@ -207,8 +205,8 @@ class Delaunay:
     func triangulate_debug_3_finalize_triangle(point:Point2) -> Array:
         for edge in m_polygon:
             var triangle = Triangle.new(point, edge.a, edge.b)
-            debug_triangulation.append(triangle)
-        return debug_triangulation
+            m_triangles.append(triangle)
+        return m_triangles
 
     ##############################################################################
     # Private Functions
