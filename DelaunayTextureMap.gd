@@ -2,7 +2,7 @@ extends TextureRect
 
 class_name DelaunayTextureRect
 
-var m_delaunay:AzgaarDelaunay.Delaunay
+var m_delaunay
 var m_image:Image
 #@onready var m_sub_viewport:SubViewport = $SubViewportContainer/SubViewport
 var m_sub_viewport:SubViewport
@@ -48,7 +48,7 @@ func save_image(_path):
     await RenderingServer.frame_post_draw
     m_image.save_png(_path)
 
-func initialize(delaunay:AzgaarDelaunay.Delaunay, image_size:Vector2i):
+func initialize(delaunay, image_size:Vector2i):
     m_delaunay = delaunay
     m_image = Image.create(image_size.x, image_size.y, false, Image.FORMAT_RGBA8)
     m_image.fill(Color.hex(0x000000FE))

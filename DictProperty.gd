@@ -37,6 +37,15 @@ func update_dict(property_dict = {}):
                 add_child(prop)
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
                 prop.connect("pressed", func() : _property_update(key, prop.button_pressed))
+            "OptionButton":
+                #print ("OPTION")
+                var prop = OptionButton.new()
+                for option in property_dict[key]["options"]:
+                    prop.add_item(option)
+                prop.selected = property_dict[key]["value"]
+                add_child(prop)
+                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
+                prop.connect("item_selected", func(_val) : _property_update(key, _val))
             "SpinBox":
                 #print("FLOAT")
                 var prop = SpinBox.new()
@@ -88,13 +97,16 @@ func set_value(n, value):
         "CheckBox":
             m_widget_dict[n]["widget"].button_pressed = value
         "SpinBox":
-            m_widget_dict[n]["widget"].value = value
+            var v:SpinBox = m_widget_dict[n]["widget"]
+            v.value = value
         "LineEdit":
             m_widget_dict[n]["widget"].text = value
         "HSlider":
             m_widget_dict[n]["widget"].value = value
         "Button":
             m_widget_dict[n]["widget"].text = value
+        "OptionButton":
+            m_widget_dict[n]["widget"].selected = value
 
 func _property_update(property_name, property_value):
     property_changed.emit(property_name, property_value)

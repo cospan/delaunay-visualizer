@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://drcvnbr7pvkbx"]
+
+[ext_resource type="Script" path="res://DelaunayExperimentalAzgaar.gd" id="1_hdsql"]
+
+[node name="DelaunayExperimentalAzgaar" type="Node"]
+script = ExtResource("1_hdsql")

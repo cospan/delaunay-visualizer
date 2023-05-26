@@ -1,10 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://cspycfsqda2yr"]
 
-[ext_resource type="Script" path="res://DictProperty.gd" id="1_gquwa"]
+[ext_resource type="Script" path="res://DictProperty.gd" id="1_fi08u"]
 
 [node name="DictProperty" type="GridContainer"]
 offset_right = 40.0
 offset_bottom = 40.0
 size_flags_vertical = 3
 columns = 2
-script = ExtResource("1_gquwa")
+script = ExtResource("1_fi08u")
