@@ -129,6 +129,12 @@ func _process(_delta):
                 verbose_timer.start(WAIT_TIME)
         STATE.FINALIZE_TRIANGLE:
             m_dict_property.set_value("state", "FINALIZE_TRIANGLE")
+            var search_count = 0
+            if delaunay_types_key == "Iterate":
+                search_count = len(delaunay.m_triangles)
+            elif delaunay_types_key == "Experimental":
+                search_count = len(delaunay.m_triangle_dict.keys())
+
             m_curr_triangles = delaunay.triangulate_verbose_finalize_triangle(m_points[m_point_index])
             delaunay_texture_map.triangles_updated()
             m_point_index += 1
@@ -141,7 +147,7 @@ func _process(_delta):
             else:
                 m_next_state = STATE.DONE
             m_dict_property.set_value("num_points", len(delaunay.m_points))
-            m_dict_property.set_value("num_triangle_search", len(delaunay.m_triangles))
+            m_dict_property.set_value("num_triangle_search", search_count)
             if !m_enable_step:
                 verbose_timer.start(WAIT_TIME)
 
@@ -268,6 +274,8 @@ func _on_verbose_timer_timeout():
 func _on_dict_property_property_changed(property_name, property_value):
     #print("Property: %s" % str([property_name, property_value]))
     match(property_name):
+        "delaunay_select":
+            delaunay_types_key = property_value
         "enable_step":
             m_enable_step = property_value
         "step_button":

@@ -45,7 +45,7 @@ func update_dict(property_dict = {}):
                 prop.selected = property_dict[key]["value"]
                 add_child(prop)
                 m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("item_selected", func(_val) : _property_update(key, _val))
+                prop.connect("item_selected", func(_val) : _property_update(key, m_widget_dict[key]["widget"].get_item_text(_val)))
             "SpinBox":
                 #print("FLOAT")
                 var prop = SpinBox.new()

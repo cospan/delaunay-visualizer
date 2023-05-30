@@ -1,156 +1,9 @@
-extends Node
+extends DelaunayBase
 class_name AzgaarExperimentalDelaunay
 
 ##############################################################################
 # Classes
 ##############################################################################
-
-class Point2:
-    var data
-    var x:
-        set(nv):
-            v.x = nv
-        get:
-            return v.x
-    var y:
-        set(nv):
-            v.y = nv
-        get:
-            return v.y
-    var v:Vector2:
-          get:
-              return v
-    func _init(point: Vector2, d):
-        v = point
-        self.data = d
-
-class Edge:
-    var a: Point2
-    var b: Point2
-
-    func _init(new_a: Point2, new_b: Point2):
-        self.a = new_a
-        self.b = new_b
-
-    func equals(edge: Edge) -> bool:
-        return (a == edge.a && b == edge.b) || (a == edge.b && b == edge.a)
-
-    func length() -> float:
-        return a.distance_to(b)
-
-    func center() -> Vector2:
-        return (a.v + b.v) * 0.5
-
-class Triangle:
-    var a: Point2
-    var b: Point2
-    var c: Point2
-
-    var edge_ab: Edge
-    var edge_bc: Edge
-    var edge_ca: Edge
-
-    var center: Vector2
-    var radius_sqr: float
-
-    func _init(new_a: Point2, new_b: Point2, new_c: Point2):
-        self.a = new_a
-        self.b = new_b
-        self.c = new_c
-        edge_ab = Edge.new(a,b)
-        edge_bc = Edge.new(b,c)
-        edge_ca = Edge.new(c,a)
-        recalculate_circumcircle()
-
-    func recalculate_circumcircle() -> void:
-        var ab := a.v.length_squared()
-        var cd := b.v.length_squared()
-        var ef := c.v.length_squared()
-
-        var cmb := c.v - b.v
-        var amc := a.v - c.v
-        var bma := b.v - a.v
-
-        var circum := Vector2(
-            (ab * cmb.y + cd * amc.y + ef * bma.y) / (a.x * cmb.y + b.x * amc.y + c.x * bma.y),
-            (ab * cmb.x + cd * amc.x + ef * bma.x) / (a.y * cmb.x + b.y * amc.x + c.y * bma.x)
-        )
-
-        center = circum * 0.5
-        radius_sqr = a.v.distance_squared_to(center)
-
-
-    func is_point_inside_circumcircle(point: Point2) -> bool:
-        return center.distance_squared_to(point.v) < radius_sqr
-
-    func is_corner(point: Point2) -> bool:
-        return point.v == a.v || point.v == b.v || point.v == c.v
-
-    func get_corner_opposite_edge(corner: Point2) -> Edge:
-        if corner.v == a.v:
-            return edge_bc
-        elif corner.v == b.v:
-            return edge_ca
-        elif corner.v == c.v:
-            return edge_ab
-        else:
-            return null
-
-class TriangleGraph:
-    var m_point_graph: Dictionary = {}
-    var m_edge_graph: Dictionary = {}
-    var m_triangle_graph: Dictionary = {}
-
-    var m_point_index: int = 0
-    var m_edge_index: int = 0
-    var m_triangle_index: int = 0
-
-    func _init():
-        pass
-
-    # Points
-    func add_point(point: Point2) -> int:
-        m_point_graph[point] = m_point_index
-        var i = m_point_index
-        m_point_index += 1
-        return i
-
-    func create_point(v: Vector2, d) -> int:
-        var p = Point2.new(v, d)
-        return add_point(p)
-
-    func remove_point(index) -> void:
-        m_point_graph.erase(index)
-
-    func get_point(index) -> Point2:
-        return m_point_graph[index]
-
-    # Edges
-    func add_edge(edge: Edge) -> int:
-        m_edge_graph[edge] = m_edge_index
-        var i = m_edge_index
-        m_edge_index += 1
-        return i
-
-    func create_edge(a: Point2, b: Point2) -> Edge:
-        var edge := Edge.new(a,b)
-        add_edge(edge)
-        return edge
-
-    func get_edges_from_point(index) -> Array:
-        var edges := []
-        for edge in m_edge_graph:
-            if edge.a == index or edge.b == index:
-                edges.append(edge)
-        return edges
-
-    func remove_edge(index) -> void:
-        m_edge_graph.erase(index)
-
-    # Triangles
-    func add_triangle(triangle: Triangle) -> void:
-        m_triangle_graph[triangle] = m_triangle_index
-        m_triangle_index += 1
 
 ##############################################################################
 # Public Static Functions
@@ -240,38 +93,41 @@ class Delaunay:
 
         m_rect_super_corners.append_array([c0,c1,c2,c3])
 
-        m_rect_super_triangle1 = Triangle.new(c0,c1,c2)
+        m_rect_super_triangle1 = Triangle.new(m_curr_index, c0,c1,c2)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle1
         m_curr_index += 1
-        m_rect_super_triangle2 = Triangle.new(c1,c2,c3)
+        m_rect_super_triangle2 = Triangle.new(m_curr_index, c1,c2,c3)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle2
         m_curr_index += 1
-        update_viewport(m_bad_triangle_dict, m_add_triangle_dict)
+        update_triangles(m_bad_triangle_dict, m_add_triangle_dict)
 
     func triangulate_verbose_find_bad_triangles_from_point(point:Point2) -> Array:
         m_bad_triangle_dict.clear()
         m_polygon.clear()
         m_points.append(point)
         _find_bad_triangles(point)
-        update_viewport(m_bad_triangle_dict, m_add_triangle_dict)
         return m_bad_triangle_dict.values()
 
     func triangulate_verbose_make_outer_polygon() -> Array:
         for key in m_bad_triangles:
+            m_triangle_dict[key].remove()
             m_triangle_dict.erase(key)
         _make_outer_polygon()
         return m_polygon
 
     func triangulate_verbose_finalize_triangle(point:Point2) -> Array:
         for edge in m_polygon:
-            var triangle = Triangle.new(point, edge.a, edge.b)
-            m_triangle_dict[m_curr_index] = triangle
+            var triangle = Triangle.new(m_curr_index, point, edge.a, edge.b)
+            m_add_triangle_dict[m_curr_index] = triangle
+            m_curr_index += 1
+        update_triangles(m_bad_triangle_dict, m_add_triangle_dict)
         return m_triangle_dict.values()
+
 
     ##############################################################################
     # Private Functions
     ##############################################################################
-    func update_viewport(delete_triangle_dict: Dictionary, added_triangle_dict: Dictionary)->void:
+    func update_triangles(delete_triangle_dict: Dictionary, added_triangle_dict: Dictionary)->void:
         for key in delete_triangle_dict:
             var p = m_sv_polygons[key]
             m_sub_viewport.remove_child(p)
@@ -294,17 +150,43 @@ class Delaunay:
         added_triangle_dict.clear()
         m_image = m_sub_viewport.get_texture().get_image()
 
-    func _get_triangle_from_point(pos: Vector2) -> Triangle:
+    func _get_triangles_from_point(pos: Vector2) -> Array:
         var colour = m_image.get_pixel(roundi(pos.x), roundi(pos.y))
-        var index = colour.to_rgba32()
-        return m_triangle_dict[index]
+        var index = (colour.to_rgba32() >> 8) & 0xFFFFFF
+        var found_triangles = []
+        found_triangles.append(m_triangle_dict[index])
 
-    func _find_bad_triangles(point: Point2) -> void:
-        #_get_triangle_from_point(point.v)
-        for key in m_triangle_dict.keys():
-            var triangle = m_triangle_dict[key]
+        #Find Neightboring Triangles
+        # Go through each of the points and find all the triangles that use this point
+        var points = []
+        points.append(m_triangle_dict[index].a)
+        points.append(m_triangle_dict[index].b)
+        points.append(m_triangle_dict[index].c)
+
+        var edges = []
+        for point in points:
+            edges.append(point.edges)
+
+        # Go through each of the edges and find all the triangles that use this edge
+        for edge_pair in edges:
+            for edge in edge_pair:
+                for triangle in edge.triangles:
+                    # If the triangle is not already in the list, add it
+                    found_triangles.append(triangle)
+
+        return found_triangles
+
+    func _find_bad_triangles(point:Point2) -> void:
+        var sdict = {}
+        var triangles = _get_triangles_from_point(point.v)
+        for triangle in triangles:
+            var key = triangle.key
+            if key in sdict:
+                continue
+            sdict[key] = triangle
             if triangle.is_point_inside_circumcircle(point):
-                m_bad_triangle_dict[key] = triangle
+                m_bad_triangle_dict[triangle.key] = triangle
+                m_triangle_dict.erase(triangle.key)
 
     func _make_outer_polygon() -> void:
         var duplicates: Array = [] # of Edge

@@ -1,100 +1,6 @@
-extends Node
+extends DelaunayBase
 class_name AzgaarIterateDelaunay
 
-##############################################################################
-# Classes
-##############################################################################
-
-class Point2:
-    var data
-    var x:
-        set(nv):
-            v.x = nv
-        get:
-            return v.x
-    var y:
-        set(nv):
-            v.y = nv
-        get:
-            return v.y
-    var v:Vector2:
-          get:
-              return v
-    func _init(point: Vector2, d):
-        v = point
-        self.data = d
-
-class Edge:
-    var a: Point2
-    var b: Point2
-
-    func _init(new_a: Point2, new_b: Point2):
-        self.a = new_a
-        self.b = new_b
-
-    func equals(edge: Edge) -> bool:
-        return (a == edge.a && b == edge.b) || (a == edge.b && b == edge.a)
-
-    func length() -> float:
-        return a.distance_to(b)
-
-    func center() -> Vector2:
-        return (a.v + b.v) * 0.5
-
-class Triangle:
-    var a: Point2
-    var b: Point2
-    var c: Point2
-
-    var edge_ab: Edge
-    var edge_bc: Edge
-    var edge_ca: Edge
-
-    var center: Vector2
-    var radius_sqr: float
-
-    func _init(new_a: Point2, new_b: Point2, new_c: Point2):
-        self.a = new_a
-        self.b = new_b
-        self.c = new_c
-        edge_ab = Edge.new(a,b)
-        edge_bc = Edge.new(b,c)
-        edge_ca = Edge.new(c,a)
-        recalculate_circumcircle()
-
-    func recalculate_circumcircle() -> void:
-        var ab := a.v.length_squared()
-        var cd := b.v.length_squared()
-        var ef := c.v.length_squared()
-
-        var cmb := c.v - b.v
-        var amc := a.v - c.v
-        var bma := b.v - a.v
-
-        var circum := Vector2(
-            (ab * cmb.y + cd * amc.y + ef * bma.y) / (a.x * cmb.y + b.x * amc.y + c.x * bma.y),
-            (ab * cmb.x + cd * amc.x + ef * bma.x) / (a.y * cmb.x + b.y * amc.x + c.y * bma.x)
-        )
-
-        center = circum * 0.5
-        radius_sqr = a.v.distance_squared_to(center)
-
-
-    func is_point_inside_circumcircle(point: Point2) -> bool:
-        return center.distance_squared_to(point.v) < radius_sqr
-
-    func is_corner(point: Point2) -> bool:
-        return point.v == a.v || point.v == b.v || point.v == c.v
-
-    func get_corner_opposite_edge(corner: Point2) -> Edge:
-        if corner.v == a.v:
-            return edge_bc
-        elif corner.v == b.v:
-            return edge_ca
-        elif corner.v == c.v:
-            return edge_ab
-        else:
-            return null
 
 ##############################################################################
 # Public Static Functions
@@ -146,7 +52,6 @@ class Delaunay:
         m_bad_triangle_dict.clear()
         m_add_triangle_dict.clear()
 
-
     func add_point(coor: Vector2, data) -> void:
         m_points.append(Point2.new(coor, data))
 
@@ -187,10 +92,10 @@ class Delaunay:
 
         m_rect_super_corners.append_array([c0,c1,c2,c3])
 
-        m_rect_super_triangle1 = Triangle.new(c0,c1,c2)
+        m_rect_super_triangle1 = Triangle.new(0, c0,c1,c2)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle1
         m_curr_index += 1
-        m_rect_super_triangle2 = Triangle.new(c1,c2,c3)
+        m_rect_super_triangle2 = Triangle.new(0, c1,c2,c3)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle2
         m_curr_index += 1
 
@@ -214,7 +119,7 @@ class Delaunay:
 
     func triangulate_verbose_finalize_triangle(point:Point2) -> Array:
         for edge in m_polygon:
-            var triangle = Triangle.new(point, edge.a, edge.b)
+            var triangle = Triangle.new(0, point, edge.a, edge.b)
             m_triangles.append(triangle)
         return m_triangles
 
@@ -347,10 +252,10 @@ class DelaunayExperimental:
 
         m_rect_super_corners.append_array([c0,c1,c2,c3])
 
-        m_rect_super_triangle1 = Triangle.new(c0,c1,c2)
+        m_rect_super_triangle1 = Triangle.new(0, c0,c1,c2)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle1
         m_curr_index += 1
-        m_rect_super_triangle2 = Triangle.new(c1,c2,c3)
+        m_rect_super_triangle2 = Triangle.new(0, c1,c2,c3)
         m_add_triangle_dict[m_curr_index] = m_rect_super_triangle2
         m_curr_index += 1
         update_viewport(m_bad_triangle_dict, m_add_triangle_dict)
@@ -371,7 +276,7 @@ class DelaunayExperimental:
 
     func triangulate_verbose_finalize_triangle(point:Point2) -> Array:
         for edge in m_polygon:
-            var triangle = Triangle.new(point, edge.a, edge.b)
+            var triangle = Triangle.new(0, point, edge.a, edge.b)
             m_triangle_dict[m_curr_index] = triangle
         return m_triangle_dict.values()
 
@@ -432,29 +337,3 @@ class DelaunayExperimental:
             m_polygon.erase(edge)
 
 
-    ##############################################################################
-    # Faster triangulation
-    ##############################################################################
-    #func triangulate() -> Array: # of Triangle
-    #    var triangulation: Array = []
-
-    #    # calculate rectangle if none
-    #    if !(m_rect.has_area()):
-    #        set_rect(calc_rect(m_points))
-
-    #    triangulation.append(m_rect_super_triangle1)
-    #    triangulation.append(m_rect_super_triangle2)
-
-    #    for point in m_points:
-    #        m_bad_triangles.clear()
-    #        m_polygon.clear()
-
-    #        _find_bad_triangles(point, triangulation, m_bad_triangles)
-    #        for bad_tirangle in m_bad_triangles:
-    #            triangulation.erase(bad_tirangle)
-
-    #        _make_outer_polygon(m_bad_triangles, m_polygon)
-    #        for edge in m_polygon:
-    #            triangulation.append(Triangle.new(point, edge.a, edge.b))
-
-    #    return triangulation
