@@ -27,19 +27,20 @@ func save_image(_path):
     var r = Rect2(Vector2(), m_sub_viewport.size)
     points = [Vector2(0, 0), Vector2(0, r.end.y), Vector2(r.end.x, r.end.y), Vector2(r.end.x, 0)]
     var p = Polygon2D.new()
-    p.polygon = points
+    p.polygon = Geometry2D.convex_hull(points)
     p.color = colour
     m_sub_viewport.add_child(p)
 
-    for i in range(len(m_delaunay.m_triangles)):
-        var triangle = m_delaunay.m_triangles[i]
+    for i in range(len(m_delaunay.m_triangle_dict.keys())):
+        var key = m_delaunay.m_triangle_dict.keys()[i]
+        var triangle = m_delaunay.m_triangle_dict[key]
         if m_delaunay.is_border_triangle(triangle):
             continue
         points = [triangle.a.v, triangle.b.v, triangle.c.v]
-        colour = [Color.hex(0x000000FF | (i << 8))]
+        colour = [Color.hex(0x000000FF | (triangle.key << 8))]
         p = Polygon2D.new()
-        p.polygon = points
-        p.color = Color.hex(0x000000FF | (i << 8))
+        p.polygon = Geometry2D.convex_hull(points)
+        p.color = Color.hex(0x000000FF | (triangle.key << 8))
         m_sub_viewport.add_child(p)
 
     #m_image = get_viewport().get_texture().get_image()
@@ -79,18 +80,18 @@ func triangles_updated():
     var r = Rect2(Vector2(), m_sub_viewport.size)
     points = [Vector2(0, 0), Vector2(0, r.end.y), Vector2(r.end.x, r.end.y), Vector2(r.end.x, 0)]
     var p = Polygon2D.new()
-    p.polygon = points
+    p.polygon = Geometry2D.convex_hull(points)
     p.color = colour
     m_sub_viewport.add_child(p)
 
-    for i in range(len(m_delaunay.m_triangles)):
-        var triangle = m_delaunay.m_triangles[i]
+    for i in range(len(m_delaunay.m_triangle_dict.keys())):
+        var key = m_delaunay.m_triangle_dict.keys()[i]
+        var triangle = m_delaunay.m_triangle_dict[key]
         if m_delaunay.is_border_triangle(triangle):
             continue
         points = [triangle.a.v, triangle.b.v, triangle.c.v]
-        colour = [Color.hex(0x000000FF | (i << 8))]
         p = Polygon2D.new()
-        p.polygon = points
+        p.polygon = Geometry2D.convex_hull(points)
         p.color = Color.hex(0x000000FF | (i << 8))
         m_sub_viewport.add_child(p)
     #    draw_polygon(points, colour, PackedVector2Array(), texture)
@@ -110,8 +111,9 @@ func _draw():
     #points = [Vector2(0, 0), Vector2(0, r.end.y), Vector2(r.end.x, r.end.y), Vector2(r.end.x, 0)]
     #colour = [Color.hex(0x000000FE)]
     #draw_polygon(points, colour)
-    for i in range(len(m_delaunay.m_triangles)):
-        var triangle = m_delaunay.m_triangles[i]
+    for i in range(len(m_delaunay.m_triangle_dict.keys())):
+        var key = m_delaunay.m_triangle_dict.keys()[i]
+        var triangle = m_delaunay.m_triangle_dict[key]
         if m_delaunay.is_border_triangle(triangle):
             continue
         points = PackedVector2Array()

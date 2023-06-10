@@ -1,5 +1,4 @@
 extends Node2D
-
 class_name DelaunayBase
 
 
@@ -35,6 +34,12 @@ class Point2:
             if edge.has(point):
                 return edge
         return null
+
+    func _to_string():
+        return "Point2: " + str(v)
+
+    func _eq(other):
+        return v == other.v
 
 
 class Edge:
@@ -149,5 +154,11 @@ class Triangle:
             return edge_ab
         else:
             return null
+
+    func get_draw_data() -> Array:
+        return [[a.v, b.v, b.v], Color.hex(0x000000FF | key << 8)]
+
+    func _to_string():
+        return "Triangle: " + str(key) + " " + str(a.v) + " " + str(b.v) + " " + str(c.v)
 
 
