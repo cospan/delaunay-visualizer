@@ -16,6 +16,7 @@ class_name AzgaarIterateDelaunay
 ##############################################################################
 
 var m_points: Array
+var m_wip_point: Point2
 var m_rect: Rect2
 var m_rect_super: Rect2
 var m_rect_super_corners: Array
@@ -77,7 +78,21 @@ func set_rect(rect: Rect2) -> void:
     var rect_max_size = max(m_rect.size.x, m_rect.size.y)
     m_rect_super = m_rect.grow(rect_max_size * 1)
 
-func triangulate_verbose_init():
+func triangulate_add_points(points: Array) -> void:
+    for point in points:
+        triangulate_add_point(point)
+
+func triangulate_add_point(point: Point2) -> void:
+    m_wip_point = point
+    m_points.append(point)
+    triangulate_find_bad_triangles_from_point(point)
+    if len(m_bad_triangle_dict) == 0:
+        return
+    triangulate_make_outer_polygon()
+    triangulate_finalize_triangle(point)
+
+
+func triangulate_init():
     m_triangle_dict.clear()
     m_add_triangle_dict.clear()
     m_bad_triangle_dict.clear()
@@ -105,21 +120,21 @@ func triangulate_verbose_init():
     m_curr_index += 1
     _update_triangles()
 
-func triangulate_verbose_find_bad_triangles_from_point(point:Point2) -> Array:
+func triangulate_find_bad_triangles_from_point(point:Point2) -> Array:
     m_bad_triangles.clear()
     m_polygon.clear()
     m_points.append(point)
     _find_bad_triangles(point)
     return m_bad_triangles
 
-func triangulate_verbose_make_outer_polygon() -> Array:
+func triangulate_make_outer_polygon() -> Array:
     for key in m_bad_triangle_dict:
         m_triangle_dict[key].remove()
         m_triangle_dict.erase(key)
     _make_outer_polygon()
     return m_polygon
 
-func triangulate_verbose_finalize_triangle(point:Point2) -> Array:
+func triangulate_finalize_triangle(point:Point2) -> Array:
     for edge in m_polygon:
         var triangle = Triangle.new(m_curr_index, point, edge.a, edge.b)
         m_add_triangle_dict[m_curr_index] = triangle

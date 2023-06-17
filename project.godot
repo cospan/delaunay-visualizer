@@ -8,6 +8,46 @@
 
 config_version=5
 
+_global_script_classes=[{
+"base": "DelaunayBase",
+"class": &"AzgaarExperimentalDelaunay",
+"language": &"GDScript",
+"path": "res://DelaunayExperimentalAzgaar.gd"
+}, {
+"base": "DelaunayBase",
+"class": &"AzgaarIterateDelaunay",
+"language": &"GDScript",
+"path": "res://DelaunayIterateAzgaar.gd"
+}, {
+"base": "Node2D",
+"class": &"DelaunayBase",
+"language": &"GDScript",
+"path": "res://DelaunayBase.gd"
+}, {
+"base": "TextureRect",
+"class": &"DelaunayTextureRect",
+"language": &"GDScript",
+"path": "res://DelaunayTextureMap.gd"
+}, {
+"base": "Node2D",
+"class": &"DelaunayTriangleDrawer",
+"language": &"GDScript",
+"path": "res://DelaunayTriangleViewport.gd"
+}, {
+"base": "GridContainer",
+"class": &"DictProperty",
+"language": &"GDScript",
+"path": "res://DictProperty.gd"
+}]
+_global_script_class_icons={
+"AzgaarExperimentalDelaunay": "",
+"AzgaarIterateDelaunay": "",
+"DelaunayBase": "",
+"DelaunayTextureRect": "",
+"DelaunayTriangleDrawer": "",
+"DictProperty": ""
+}
+
 [application]
 
 config/name="delaunay_visualizer"

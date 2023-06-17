@@ -92,7 +92,17 @@ func increment_index() -> void:
         if m_curr_index > MAX_INDEX_VAL:
             m_curr_index = 0
 
-func triangulate_verbose_init():
+#func triangulate_add_points(points: Array) -> void:
+#    for point in points:
+#        triangulate_add_point(point)
+#
+#func triangulate_add_point(point: Point2) -> void:
+#    m_wip_point = point
+#    m_points.append(point)
+#    _find_bad_triangles(point)
+
+# Verbose Version
+func triangulate_init():
     m_triangle_dict.clear()
     m_add_triangle_dict.clear()
     m_bad_triangle_dict.clear()
@@ -120,7 +130,7 @@ func triangulate_verbose_init():
     increment_index()
     _update_triangles()
 
-func triangulate_verbose_find_bad_triangles_from_point(point:Point2) -> Array:
+func triangulate_find_bad_triangles_from_point(point:Point2) -> Array:
     m_bad_triangle_dict.clear()
     m_polygon.clear()
     m_wip_point = point
@@ -132,11 +142,11 @@ func triangulate_verbose_find_bad_triangles_from_point(point:Point2) -> Array:
             print ("Found Duplicate Point: %s" % str(m_wip_point))
     return m_bad_triangle_dict.values()
 
-func triangulate_verbose_make_outer_polygon() -> Array:
+func triangulate_make_outer_polygon() -> Array:
     _make_outer_polygon()
     return m_polygon
 
-func triangulate_verbose_finalize_triangle(point:Point2) -> Array:
+func triangulate_finalize_triangle(point:Point2) -> Array:
     for edge in m_polygon:
         var triangle = Triangle.new(m_curr_index, point, edge.a, edge.b)
         m_add_triangle_dict[m_curr_index] = triangle

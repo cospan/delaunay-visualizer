@@ -12,11 +12,12 @@ enum STATE {RESET, INIT, ADD_POINT, MAKE_OUTER_POLYGON, FINALIZE_TRIANGLE, DONE,
 
 @onready var verbose_timer = $VerboseTimer
 @onready var execute_timer = $ExecuteTimer
-#@onready var delaunay_texture_map = $TabContainer/TexureMap
+@onready var delaunay_texture_map = $TabContainer/TexureMap
 
 var panel
 var m_dict_property
 
+var m_enable_debug = false
 var m_state = STATE.RESET
 var m_next_state = STATE.RESET
 var m_point_index = 0
@@ -50,6 +51,7 @@ func _ready():
     #d["test_int"] = {"type": "SpinBox", "min": 0, "max": 100, "value": 1, "name": "Int"}
     #d["test_float"] = {"type": "SpinBox", "min": 0.0, "max": 100.0, "value": 1.0, "name": "Float"}
     #d["test_string"] = {"type": "LineEdit", "value": "test", "name": "String"}
+    d["enable_debug"] = {"type": "CheckBox", "value" : m_enable_debug, "name" :"Enable Debug"} # enable debug    
     d["delaunay_select"] = {"type": "OptionButton", "name": "Delaunay Select", "options":delaunay_types.keys(), "value":key_index} # delaunay select
     d["x_count_points"] = {"type": "SpinBox", "min": 0, "max": 100, "value": X_COUNT, "name": "X Count Points"} # x count points
     d["y_count_points"] = {"type": "SpinBox", "min": 0, "max": 100, "value": Y_COUNT, "name": "Y Count Points"} # y count points
@@ -98,7 +100,7 @@ func initialize():
     m_dict_property.set_value("total_triangles_searched", m_total_triangles_searched)
     add_child(delaunay)
 
-    #delaunay_texture_map.initialize(delaunay, Vector2i(get_viewport_rect().size))
+    delaunay_texture_map.initialize(delaunay, Vector2i(get_viewport_rect().size))
     m_points.clear()
     var width = (get_viewport_rect().size.x * 0.8)
     var height = (get_viewport_rect().size.y * 0.8)
@@ -124,12 +126,12 @@ func _process(_delta):
             pass
         STATE.INIT:
             m_dict_property.set_value("state", "INIT")
-            delaunay.triangulate_verbose_init()
+            delaunay.triangulate_init()
             m_state = STATE.ADD_POINT
             m_point_index = 0
         STATE.ADD_POINT:
             m_dict_property.set_value("state", "ADD_POINT")
-            var bad_triangles = delaunay.triangulate_verbose_find_bad_triangles_from_point(m_points[m_point_index])
+            var bad_triangles = delaunay.triangulate_find_bad_triangles_from_point(m_points[m_point_index])
             if len(bad_triangles) == 0:
                 m_point_index += 1
                 m_state = STATE.WAIT
@@ -150,7 +152,7 @@ func _process(_delta):
                         verbose_timer.start(WAIT_TIME)
         STATE.MAKE_OUTER_POLYGON:
             m_dict_property.set_value("state", "MAKE_OUTER_POLYGON")
-            var outer_polygon = delaunay.triangulate_verbose_make_outer_polygon()
+            var outer_polygon = delaunay.triangulate_make_outer_polygon()
             m_outer_polygon = add_outer_polygon(outer_polygon)
             m_next_state = STATE.FINALIZE_TRIANGLE
             m_state = STATE.WAIT
@@ -163,8 +165,8 @@ func _process(_delta):
             m_dict_property.set_value("state", "FINALIZE_TRIANGLE")
             var search_count = delaunay.get_search_count()
 
-            m_curr_triangles = delaunay.triangulate_verbose_finalize_triangle(m_points[m_point_index])
-            #delaunay_texture_map.triangles_updated()
+            m_curr_triangles = delaunay.triangulate_finalize_triangle(m_points[m_point_index])
+            delaunay_texture_map.triangles_updated()
             m_point_index += 1
 
             update_triangles(m_curr_triangles)
@@ -318,6 +320,8 @@ func _on_dict_property_property_changed(property_name, property_value):
             Y_COUNT = property_value
         "delaunay_select":
             delaunay_types_key = property_value
+        "enable_debug":
+            m_enable_debug = property_value
         "enable_step":
             m_enable_step = property_value
         "step_button":
@@ -349,11 +353,14 @@ func _on_dict_property_property_changed(property_name, property_value):
             else:
                 m_skip_timer = false
             m_dict_property.set_value("wait_time_read_only", property_value)
-        #"save_image":
-        #    delaunay_texture_map.save_image("test.png")
+        "save_image":
+            delaunay_texture_map.save_image("test.png")
         _:
             pass
 
 func _on_execute_timer_timeout():
     m_second_timer += 1
+    
+    # Schedule the function
     m_dict_property.set_value("execution_time", m_second_timer)
+    
