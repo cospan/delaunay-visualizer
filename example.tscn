@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://dv2efs14c2t6m"]
+[gd_scene load_steps=4 format=3 uid="uid://cf6qo1dr84aw0"]
 
 [ext_resource type="Script" path="res://example.gd" id="1_73cfq"]
-[ext_resource type="Script" path="res://DictProperty.gd" id="2_m6gcw"]
-[ext_resource type="Script" path="res://DelaunayTextureMap.gd" id="3_qme31"]
+[ext_resource type="Script" path="res://Utils/DictProperty.gd" id="2_qfxw2"]
+[ext_resource type="Script" path="res://Delaunay/DelaunayTextureMap.gd" id="3_vnjpu"]
 
 [node name="example" type="Node2D"]
 script = ExtResource("1_73cfq")
@@ -22,7 +22,7 @@ layout_mode = 2
 
 [node name="DictProperty" type="GridContainer" parent="TabContainer/Main"]
 layout_mode = 2
-script = ExtResource("2_m6gcw")
+script = ExtResource("2_qfxw2")
 
 [node name="Panel" type="Panel" parent="TabContainer/Main"]
 layout_mode = 2
@@ -31,7 +31,7 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
-script = ExtResource("3_qme31")
+script = ExtResource("3_vnjpu")
 
 [connection signal="timeout" from="VerboseTimer" to="." method="_on_verbose_timer_timeout"]
 [connection signal="timeout" from="ExecuteTimer" to="." method="_on_execute_timer_timeout"]

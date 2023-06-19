@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bqdi2xfh7sdse"]
-
-[ext_resource type="Script" path="res://DelaunayBase.gd" id="1_muwcm"]
-
-[node name="Delaunay" type="Node2D"]
-script = ExtResource("1_muwcm")

@@ -110,3 +110,4 @@ func set_value(n, value):
 
 func _property_update(property_name, property_value):
     property_changed.emit(property_name, property_value)
+

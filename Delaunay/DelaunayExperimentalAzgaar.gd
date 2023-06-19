@@ -60,6 +60,20 @@ func _ready() -> void:
     #m_delaunay_triangle_drawer = DelaunayTriangleDrawer.new(m_rect.size)
     #m_sub_viewport.add_child(m_delaunay_triangle_drawer)
 
+func triangulate_add_points(points: Array) -> void:
+    for point in points:
+        triangulate_add_point(point)
+
+func triangulate_add_point(point: Point2) -> void:
+    m_wip_point = point
+    #m_points.append(point)
+    triangulate_find_bad_triangles_from_point(point)
+    if len(m_bad_triangle_dict) == 0:
+        return
+    triangulate_make_outer_polygon()
+    triangulate_finalize_triangle(point)
+
+
 
 func _init(rect: Rect2i = Rect2i()):
     m_points = []
@@ -92,14 +106,6 @@ func increment_index() -> void:
         if m_curr_index > MAX_INDEX_VAL:
             m_curr_index = 0
 
-#func triangulate_add_points(points: Array) -> void:
-#    for point in points:
-#        triangulate_add_point(point)
-#
-#func triangulate_add_point(point: Point2) -> void:
-#    m_wip_point = point
-#    m_points.append(point)
-#    _find_bad_triangles(point)
 
 # Verbose Version
 func triangulate_init():
@@ -139,7 +145,8 @@ func triangulate_find_bad_triangles_from_point(point:Point2) -> Array:
     if m_bad_triangle_dict.size() == 0:
         m_points.find(m_wip_point)
         if m_points.rfind(m_wip_point):
-            print ("Found Duplicate Point: %s" % str(m_wip_point))
+            #print ("Found Duplicate Point: %s" % str(m_wip_point))
+            pass
     return m_bad_triangle_dict.values()
 
 func triangulate_make_outer_polygon() -> Array:

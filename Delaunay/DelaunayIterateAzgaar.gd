@@ -84,7 +84,7 @@ func triangulate_add_points(points: Array) -> void:
 
 func triangulate_add_point(point: Point2) -> void:
     m_wip_point = point
-    m_points.append(point)
+    #m_points.append(point)
     triangulate_find_bad_triangles_from_point(point)
     if len(m_bad_triangle_dict) == 0:
         return

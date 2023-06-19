@@ -1,14 +1,14 @@
 extends Node2D
 
-enum STATE {RESET, INIT, ADD_POINT, MAKE_OUTER_POLYGON, FINALIZE_TRIANGLE, DONE, WAIT}
+enum STATE {RESET, INIT, INIT_THREADED_MODE, WAIT_FOR_THREAD, ADD_POINT, MAKE_OUTER_POLYGON, FINALIZE_TRIANGLE, DONE, WAIT}
 
 @export var WAIT_TIME = 0.1
 @export var LINE_WIDTH:float = 2
 @export var ENABLE_RANDOM = true
 @export var ENABLE_SHUFFLE = false
 @export var ENABLE_STEP = false
-@export var X_COUNT = 20
-@export var Y_COUNT = 20
+@export var X_COUNT = 5
+@export var Y_COUNT = 5
 
 @onready var verbose_timer = $VerboseTimer
 @onready var execute_timer = $ExecuteTimer
@@ -17,7 +17,7 @@ enum STATE {RESET, INIT, ADD_POINT, MAKE_OUTER_POLYGON, FINALIZE_TRIANGLE, DONE,
 var panel
 var m_dict_property
 
-var m_enable_debug = false
+var m_enable_debug = true
 var m_state = STATE.RESET
 var m_next_state = STATE.RESET
 var m_point_index = 0
@@ -35,6 +35,8 @@ var m_draw_triangles = []
 var m_second_timer = 0
 var m_total_triangles_searched = 0
 var m_skip_timer = false
+var m_task_generate_delaunay_start_time = 0
+var m_task_generate_delaunay_triangles = null
 
 var delaunay_types = {"Iterate": AzgaarIterateDelaunay, "Experimental": AzgaarExperimentalDelaunay}
 #var delaunay_types_key = "Iterate"
@@ -51,7 +53,7 @@ func _ready():
     #d["test_int"] = {"type": "SpinBox", "min": 0, "max": 100, "value": 1, "name": "Int"}
     #d["test_float"] = {"type": "SpinBox", "min": 0.0, "max": 100.0, "value": 1.0, "name": "Float"}
     #d["test_string"] = {"type": "LineEdit", "value": "test", "name": "String"}
-    d["enable_debug"] = {"type": "CheckBox", "value" : m_enable_debug, "name" :"Enable Debug"} # enable debug    
+    #d["enable_debug"] = {"type": "CheckBox", "value" : m_enable_debug, "name" :"Enable Debug"} # enable debug
     d["delaunay_select"] = {"type": "OptionButton", "name": "Delaunay Select", "options":delaunay_types.keys(), "value":key_index} # delaunay select
     d["x_count_points"] = {"type": "SpinBox", "min": 0, "max": 100, "value": X_COUNT, "name": "X Count Points"} # x count points
     d["y_count_points"] = {"type": "SpinBox", "min": 0, "max": 100, "value": Y_COUNT, "name": "Y Count Points"} # y count points
@@ -61,9 +63,9 @@ func _ready():
     d["enable_step"] = {"type": "CheckBox", "value" : m_enable_step, "name" :"Enable Step"} # enable step
     d["wait_time"] = {"type": "HSlider", "min": 0.0, "max": 2.0, "value": WAIT_TIME, "step": 0.1, "name": "Wait Time"} # wait time between steps
     d["wait_time_read_only"] = {"type": "SpinBox", "min": 0.0, "max": 2.0, "step": 0.1, "value": WAIT_TIME, "name": "Wait Time", "readonly": true} # wait time between steps
-    d["num_triangle_search"] = {"type": "SpinBox", "min": 0, "max": 2000, "value": 0, "name": "Num Triangles Search", "readonly": true} # number of triangles to search
-    d["total_triangles_searched"] = {"type": "SpinBox", "min": 0, "max": 1000000, "value": 0, "name": "Total Triangles Searched", "readonly": true} # total number of triangles searchedk
-    d["num_points"] = {"type": "SpinBox", "min": 0, "max": 2000, "value": 0, "name": "Num Points", "readonly": true} # number of points
+    d["num_triangle_search"] = {"type": "SpinBox", "min": 0, "max": 100000, "value": 0, "name": "Num Triangles Search", "readonly": true} # number of triangles to search
+    d["total_triangles_searched"] = {"type": "SpinBox", "min": 0, "max": 100000000, "value": 0, "name": "Total Triangles Searched", "readonly": true} # total number of triangles searchedk
+    d["num_points"] = {"type": "SpinBox", "min": 0, "max": 100000, "value": 0, "name": "Num Points", "readonly": true} # number of points
     d["execution_time"] = {"type": "SpinBox", "min": 0.0, "max": 100000.0, "value": 0.0, "name": "Execution Time", "readonly": true} # execution time
     d["step_button"] = {"type": "Button", "name": "Step"} # step
     d["start_stop_button"] = {"type": "Button", "name": "Start"} # start triangulation
@@ -118,7 +120,9 @@ func initialize():
             m_points.shuffle()
 
     if m_repeat_test_flag:
+        print ("Repeat Flag Set!")
         m_points = m_points + m_points
+    verbose_timer.stop()
 
 func _process(_delta):
     match(m_state):
@@ -127,8 +131,18 @@ func _process(_delta):
         STATE.INIT:
             m_dict_property.set_value("state", "INIT")
             delaunay.triangulate_init()
-            m_state = STATE.ADD_POINT
             m_point_index = 0
+            if !m_enable_debug:
+                m_state = STATE.INIT_THREADED_MODE
+            else:
+                m_state = STATE.ADD_POINT
+        STATE.INIT_THREADED_MODE:
+            m_task_generate_delaunay_start_time = Time.get_ticks_usec()
+            m_task_generate_delaunay_triangles = TaskManager.create_task(_generate_delaunay_triangles_thread, true, "Generate Delaunay Triangles")
+            m_task_generate_delaunay_triangles.completed.connect(_generate_delaunay_triangles_thread_finished)
+            m_state = STATE.WAIT_FOR_THREAD
+        STATE.WAIT_FOR_THREAD:
+            pass
         STATE.ADD_POINT:
             m_dict_property.set_value("state", "ADD_POINT")
             var bad_triangles = delaunay.triangulate_find_bad_triangles_from_point(m_points[m_point_index])
@@ -360,7 +374,25 @@ func _on_dict_property_property_changed(property_name, property_value):
 
 func _on_execute_timer_timeout():
     m_second_timer += 1
-    
+
     # Schedule the function
     m_dict_property.set_value("execution_time", m_second_timer)
-    
+
+
+func _generate_delaunay_triangles_thread():
+    # Iterate through all the points and add them to delaunay generator, updating the number of triangles
+    for point in m_points:
+        delaunay.triangulate_add_point(point)
+        m_dict_property.set_value("num_points", len(delaunay.m_points))
+        m_dict_property.set_value("num_triangle_search", delaunay.get_search_count())
+        m_total_triangles_searched += delaunay.get_search_count()
+        m_dict_property.set_value("total_triangles_searched", m_total_triangles_searched)
+
+func _generate_delaunay_triangles_thread_finished():
+    var elapsed_time = Time.get_ticks_usec() - m_task_generate_delaunay_start_time
+    elapsed_time = elapsed_time / 1000000.0
+    print ("Delaunay Type: %s" % delaunay_types_key)
+    print ("Total Points: %d" % len(m_points))
+    print ("Generate Threaded Elapsed Time: %f" % elapsed_time)
+    print ("")
+    m_state = STATE.DONE
